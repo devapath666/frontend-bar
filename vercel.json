@@ -1,0 +1,5 @@
+{
+  "installCommand": "npm install --include=dev --unsafe-perm",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
