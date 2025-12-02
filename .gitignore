@@ -1,0 +1,21 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# production
+dist
+dist-ssr
+*.local
+
+# env files
+.env
+.env.local
+.env.production.local
+
+# editor
+.vscode
+.idea
+
+# OS
+.DS_Store
