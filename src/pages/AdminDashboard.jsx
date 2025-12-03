@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { getComandasActivas, updateEstadoComanda } from '../services/api';
 import useStore from '../store/useStore';
 import useSocket from '../hooks/useSocket';
@@ -8,14 +9,12 @@ import MesasAdmin from '../components/MesasAdmin';
 import UsuariosAdmin from '../components/UsuariosAdmin';
 import HistorialComandas from '../components/HistorialComandas';
 
-
 function AdminDashboard() {
-  const [tab, setTab] = useState('comandas'); // 'comandas' | 'productos' | 'mesas'
+  const [tab, setTab] = useState('comandas');
   const [comandas, setComandas] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentUser, logout } = useStore();
   const navigate = useNavigate();
-  
 
   const fetchComandas = useCallback(async () => {
     try {
@@ -33,23 +32,46 @@ function AdminDashboard() {
   }, [fetchComandas]);
 
   useSocket('comanda_creada', useCallback(() => {
-    console.log('Nueva comanda recibida');
     fetchComandas();
   }, [fetchComandas]));
 
   useSocket('comanda_actualizada', useCallback(() => {
-    console.log('Comanda actualizada');
     fetchComandas();
   }, [fetchComandas]));
 
-  const handleCambiarEstado = async (comandaId, nuevoEstado) => {
-    try {
-      await updateEstadoComanda(comandaId, nuevoEstado);
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      alert('Error al cambiar estado');
+/** 🔥 SWEET ALERT LOADING SIN CONFIRMACIÓN */
+const handleCambiarEstado = async (comandaId, nuevoEstado) => {
+  Swal.fire({
+    title: 'Actualizando...',
+    text: `Cambiando a "${nuevoEstado}"`,
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
     }
-  };
+  });
+
+  try {
+    await updateEstadoComanda(comandaId, nuevoEstado);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Estado actualizado',
+      text: `La comanda pasó a "${nuevoEstado}".`,
+      timer: 1200,
+      showConfirmButton: false
+    });
+
+    fetchComandas();
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se pudo cambiar el estado',
+    });
+  }
+};
+
 
   const handleLogout = () => {
     logout();
@@ -94,7 +116,8 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+
+      {/* HEADER */}
       <div className="bg-white border-b p-4">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -109,75 +132,44 @@ function AdminDashboard() {
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* TABS */}
         <div className="flex gap-2 overflow-x-auto">
-          <button
-            onClick={() => setTab('comandas')}
-            className={`px-4 py-2 rounded-t whitespace-nowrap ${
-              tab === 'comandas'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-          >
+          <button onClick={() => setTab('comandas')}
+            className={`px-4 py-2 rounded-t ${tab === 'comandas' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
             Comandas
           </button>
-          <button
-            onClick={() => setTab('productos')}
-            className={`px-4 py-2 rounded-t whitespace-nowrap ${
-              tab === 'productos'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-          >
+          <button onClick={() => setTab('productos')}
+            className={`px-4 py-2 rounded-t ${tab === 'productos' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
             Productos
           </button>
-          <button
-            onClick={() => setTab('mesas')}
-            className={`px-4 py-2 rounded-t whitespace-nowrap ${
-              tab === 'mesas'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-          >
+          <button onClick={() => setTab('mesas')}
+            className={`px-4 py-2 rounded-t ${tab === 'mesas' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
             Mesas
           </button>
-          <button
-            onClick={() => setTab('usuarios')}
-            className={`px-4 py-2 rounded-t whitespace-nowrap ${
-              tab === 'usuarios'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-          >
+          <button onClick={() => setTab('usuarios')}
+            className={`px-4 py-2 rounded-t ${tab === 'usuarios' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
             Usuarios
           </button>
-<button
-  onClick={() => setTab('historial')}
-  className={`px-4 py-2 rounded-t whitespace-nowrap ${
-    tab === 'historial'
-      ? 'bg-blue-500 text-white'
-      : 'bg-gray-200 text-gray-700'
-  }`}
->
-  Historial
-</button>
-
-
+          <button onClick={() => setTab('historial')}
+            className={`px-4 py-2 rounded-t ${tab === 'historial' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
+            Historial
+          </button>
         </div>
       </div>
 
-      {/* Contenido según tab */}
+      {/* CONTENIDO */}
       {tab === 'historial' ? (
-  <HistorialComandas />
-) : tab === 'usuarios' ? (
-  <UsuariosAdmin />
-) : tab === 'mesas' ? (
-  <MesasAdmin />
-) : tab === 'productos' ? (
-  <ProductosAdmin />
-) : (
+        <HistorialComandas />
+      ) : tab === 'usuarios' ? (
+        <UsuariosAdmin />
+      ) : tab === 'mesas' ? (
+        <MesasAdmin />
+      ) : tab === 'productos' ? (
+        <ProductosAdmin />
+      ) : (
         <div className="p-4">
-          {/* Stats */}
+
+          {/* STATS */}
           <div className="grid grid-cols-3 gap-2 mb-6">
             <div className="bg-yellow-100 p-3 rounded">
               <p className="text-xs text-gray-600">Pendientes</p>
@@ -199,7 +191,7 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* Comandas */}
+          {/* COMANDAS */}
           {comandas.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               No hay comandas activas
@@ -214,13 +206,12 @@ function AdminDashboard() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="font-bold text-lg">{comanda.mesa.numero}</p>
-<p className="text-xs text-gray-600">
-  Pedido #{comanda.id.slice(0, 8)}
-</p>
-<p className="text-xs text-blue-600 mt-1">
-  👤 {comanda.usuarioEmail}
-</p>
-
+                      <p className="text-xs text-gray-600">
+                        Pedido #{comanda.id.slice(0, 8)}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        👤 {comanda.usuarioEmail}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-600">
@@ -236,13 +227,9 @@ function AdminDashboard() {
                   <div className="mb-3 space-y-1">
                     {comanda.items.map((item) => (
                       <div key={item.id} className="flex justify-between text-sm">
-                        <span>
-                          {item.cantidad}x {item.producto.nombre}
-                        </span>
+                        <span>{item.cantidad}x {item.producto.nombre}</span>
                         {item.observaciones && (
-                          <span className="text-xs text-gray-600 italic">
-                            ({item.observaciones})
-                          </span>
+                          <span className="text-xs text-gray-600 italic">({item.observaciones})</span>
                         )}
                       </div>
                     ))}
