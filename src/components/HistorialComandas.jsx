@@ -1,16 +1,43 @@
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import { getHistorial } from '../services/api';
 
 function HistorialComandas() {
   const [historial, setHistorial] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getHistorial().then(res => setHistorial(res.data));
+    fetchHistorial();
   }, []);
+
+  const fetchHistorial = async () => {
+    try {
+      const res = await getHistorial();
+      setHistorial(res.data);
+    } catch (error) {
+      Swal.fire('Error', 'No se pudo cargar el historial de ventas', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        Cargando historial...
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
       <h2 className="text-xl font-bold">Historial de Ventas</h2>
+
+      {historial.length === 0 && (
+        <div className="text-gray-500 text-center py-10">
+          No hay ventas registradas aún
+        </div>
+      )}
 
       {historial.map((comanda) => (
         <div key={comanda.id} className="bg-white border p-4 rounded-lg">

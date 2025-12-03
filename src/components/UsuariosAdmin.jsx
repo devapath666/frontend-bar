@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../services/api';
+import Swal from 'sweetalert2';
 
 function UsuariosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
@@ -30,23 +31,42 @@ function UsuariosAdmin() {
 
     try {
       if (editando) {
-        // Si no se cambió la contraseña, no enviarla
         const dataToUpdate = { ...formData };
         if (!dataToUpdate.password) {
           delete dataToUpdate.password;
         }
         await updateUsuario(editando.id, dataToUpdate);
-        alert('Usuario actualizado');
+        
+        Swal.fire({
+          title: '¡Actualizado!',
+          text: 'Usuario actualizado correctamente',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await createUsuario(formData);
-        alert('Usuario creado');
+        
+        Swal.fire({
+          title: '¡Creado!',
+          text: 'Usuario creado correctamente',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
       
       resetForm();
       fetchUsuarios();
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al guardar usuario');
+      
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo guardar el usuario',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6'
+      });
     }
   };
 
@@ -55,22 +75,47 @@ function UsuariosAdmin() {
     setFormData({
       nombre: usuario.nombre,
       email: usuario.email,
-      password: '', // No mostrar password
+      password: '',
       rol: usuario.rol
     });
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este usuario?')) return;
+    const result = await Swal.fire({
+      title: '¿Eliminar usuario?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteUsuario(id);
-      alert('Usuario eliminado');
+      
+      Swal.fire({
+        title: '¡Eliminado!',
+        text: 'Usuario eliminado correctamente',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      
       fetchUsuarios();
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al eliminar usuario');
+      
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo eliminar el usuario',
+        icon: 'error',
+        confirmButtonColor: '#3b82f6'
+      });
     }
   };
 

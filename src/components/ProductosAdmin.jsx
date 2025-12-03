@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { getProductos, createProducto, updateProducto, deleteProducto } from '../services/api';
 
 function ProductosAdmin() {
-    const [showArchivados, setShowArchivados] = useState(false);
+  const [showArchivados, setShowArchivados] = useState(false);
   const [productos, setProductos] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -22,7 +23,7 @@ function ProductosAdmin() {
       const response = await getProductos();
       setProductos(response.data);
     } catch (error) {
-      console.error('Error al cargar productos:', error);
+      Swal.fire('Error', 'No se pudieron cargar los productos', 'error');
     }
   };
 
@@ -32,17 +33,26 @@ function ProductosAdmin() {
     try {
       if (editando) {
         await updateProducto(editando.id, formData);
-        alert('Producto actualizado');
+        Swal.fire({
+          icon: 'success',
+          title: 'Producto actualizado correctamente',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await createProducto(formData);
-        alert('Producto creado');
+        Swal.fire({
+          icon: 'success',
+          title: 'Producto creado correctamente',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
-      
+
       resetForm();
       fetchProductos();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error al guardar producto');
+      Swal.fire('Error', 'Hubo un problema al guardar el producto', 'error');
     }
   };
 
@@ -58,15 +68,32 @@ function ProductosAdmin() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este producto?')) return;
+    const result = await Swal.fire({
+      title: '¿Eliminar producto?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteProducto(id);
-      alert('Producto eliminado');
+      Swal.fire({
+        icon: 'success',
+        title: 'Producto eliminado',
+        timer: 1500,
+        showConfirmButton: false
+      });
       fetchProductos();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error al eliminar producto');
+      Swal.fire(
+        'Error',
+        error.response?.data?.error || 'No se pudo eliminar el producto',
+        'error'
+      );
     }
   };
 
@@ -84,8 +111,7 @@ function ProductosAdmin() {
   const categorias = ['BEBIDAS', 'COMIDAS', 'POSTRES', 'PANIFICADOS'];
 
   const activos = productos.filter(p => p.disponible);
-const archivados = productos.filter(p => !p.disponible);
-
+  const archivados = productos.filter(p => !p.disponible);
 
   return (
     <div className="p-4">
@@ -174,7 +200,7 @@ const archivados = productos.filter(p => !p.disponible);
         </div>
       )}
 
-      {/* Lista de productos */}
+      {/* Lista de productos activos */}
       <div className="space-y-2">
         {activos.map((producto) => (
           <div
@@ -209,54 +235,53 @@ const archivados = productos.filter(p => !p.disponible);
       </div>
 
       {/* Sección de archivados */}
-<div className="mt-6">
-  <button
-    onClick={() => setShowArchivados(!showArchivados)}
-    className="text-sm text-gray-600 underline"
-  >
-    Archivados ({archivados.length})
-  </button>
-
-  {showArchivados && (
-    <div className="mt-3 space-y-2">
-      {archivados.length === 0 && (
-        <p className="text-xs text-gray-500">No hay productos archivados</p>
-      )}
-
-      {archivados.map((producto) => (
-        <div
-          key={producto.id}
-          className="bg-gray-100 p-4 rounded-lg border flex justify-between items-center opacity-70"
+      <div className="mt-6">
+        <button
+          onClick={() => setShowArchivados(!showArchivados)}
+          className="text-sm text-gray-600 underline"
         >
-          <div className="flex-1">
-            <p className="font-semibold">{producto.nombre}</p>
-            <p className="text-sm text-gray-600">
-              {producto.categoria} • ${producto.precio}
-            </p>
-            <p className="text-xs text-red-600 font-semibold">
-              Archivado (No disponible)
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleEdit(producto)}
-              className="text-blue-500 text-sm border border-blue-500 px-3 py-1 rounded"
-            >
-              Editar
-            </button>
-            <button
-              onClick={() => handleDelete(producto.id)}
-              className="text-red-500 text-sm border border-red-500 px-3 py-1 rounded"
-            >
-              Eliminar
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+          Archivados ({archivados.length})
+        </button>
 
+        {showArchivados && (
+          <div className="mt-3 space-y-2">
+            {archivados.length === 0 && (
+              <p className="text-xs text-gray-500">No hay productos archivados</p>
+            )}
+
+            {archivados.map((producto) => (
+              <div
+                key={producto.id}
+                className="bg-gray-100 p-4 rounded-lg border flex justify-between items-center opacity-70"
+              >
+                <div className="flex-1">
+                  <p className="font-semibold">{producto.nombre}</p>
+                  <p className="text-sm text-gray-600">
+                    {producto.categoria} • ${producto.precio}
+                  </p>
+                  <p className="text-xs text-red-600 font-semibold">
+                    Archivado (No disponible)
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(producto)}
+                    className="text-blue-500 text-sm border border-blue-500 px-3 py-1 rounded"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(producto.id)}
+                    className="text-red-500 text-sm border border-red-500 px-3 py-1 rounded"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

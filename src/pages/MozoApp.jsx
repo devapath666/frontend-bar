@@ -4,6 +4,9 @@ import { getMesas, getProductos, createComanda, getComandasActivas, updateEstado
 import useStore from '../store/useStore';
 import useSocket from '../hooks/useSocket';
 
+import Swal from 'sweetalert2';
+
+
 function MozoApp() {
   const [vista, setVista] = useState('mesas'); // 'mesas' | 'menu' | 'listos' | 'cobrar'
   const [mesas, setMesas] = useState([]);
@@ -15,6 +18,8 @@ function MozoApp() {
   const [loading, setLoading] = useState(true);
   const { currentUser, logout } = useStore();
   const navigate = useNavigate();
+  const [enviando, setEnviando] = useState(false);
+
 
   // Definir TODAS las funciones antes de usarlas
   const fetchComandasListas = useCallback(async () => {
@@ -121,65 +126,128 @@ const fetchData = useCallback(async () => {
   };
 
   const enviarComanda = async () => {
-    if (carrito.length === 0) {
-      alert('Agregá productos al pedido');
-      return;
-    }
+  if (carrito.length === 0) {
+    Swal.fire('Atención', 'Agregá productos al pedido', 'warning');
+    return;
+  }
 
-    if (!currentUser || !currentUser.id) {
-      alert('Error de sesión. Por favor volvé a iniciar sesión.');
-      logout();
-      navigate('/');
-      return;
-    }
+  if (!currentUser || !currentUser.id) {
+    Swal.fire('Error', 'Sesión inválida, iniciá sesión nuevamente.', 'error');
+    logout();
+    navigate('/');
+    return;
+  }
 
-    try {
-      const comandaData = {
-        mesaId: mesaSeleccionada.id,
-        usuarioId: currentUser.id,
-        usuarioEmail: currentUser.email,
-        items: carrito.map(item => ({
-          productoId: item.productoId,
-          cantidad: item.cantidad,
-          observaciones: item.observaciones || null
-        }))
-      };
-
-      await createComanda(comandaData);
-      alert('Comanda enviada exitosamente');
-      
-      setMesaSeleccionada(null);
-      setCarrito([]);
-      setVista('mesas');
-    } catch (error) {
-      console.error('Error al enviar comanda:', error);
-      alert('Error al enviar comanda');
-    }
+  const comandaData = {
+    mesaId: mesaSeleccionada.id,
+    usuarioId: currentUser.id,
+    usuarioEmail: currentUser.email,
+    items: carrito.map(item => ({
+      productoId: item.productoId,
+      cantidad: item.cantidad,
+      observaciones: item.observaciones || null
+    }))
   };
 
-  const marcarComoEntregado = async (comandaId) => {
-    try {
-      await updateEstadoComanda(comandaId, 'ENTREGADO');
-      alert('Pedido marcado como entregado');
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al marcar como entregado');
-    }
-  };
+  try {
+    Swal.fire({
+      title: 'Enviando pedido...',
+      text: 'Por favor esperá',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
-  const marcarComoPagado = async (comandaId) => {
-    if (!window.confirm('¿Confirmar que el cliente pagó?')) {
-      return;
-    }
-    
-    try {
-      await updateEstadoComanda(comandaId, 'PAGADO');
-      alert('Pago registrado. Mesa liberada.');
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al registrar pago');
-    }
-  };
+    await createComanda(comandaData);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Pedido enviado con éxito',
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    setMesaSeleccionada(null);
+    setCarrito([]);
+    setVista('mesas');
+  } catch (error) {
+    console.error('Error al enviar comanda:', error);
+
+    Swal.fire(
+      'Error',
+      error.response?.data?.error || 'No se pudo enviar el pedido',
+      'error'
+    );
+  }
+};
+
+
+const marcarComoEntregado = async (comandaId) => {
+  const result = await Swal.fire({
+    title: '¿Marcar como entregado?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    Swal.fire({
+      title: 'Actualizando...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    await updateEstadoComanda(comandaId, 'ENTREGADO');
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Pedido entregado',
+      timer: 1200,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+  }
+};
+
+
+const marcarComoPagado = async (comandaId) => {
+  const result = await Swal.fire({
+    title: '¿Confirmar pago?',
+    text: 'Se liberará la mesa automáticamente',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, confirmar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    Swal.fire({
+      title: 'Registrando pago...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    await updateEstadoComanda(comandaId, 'PAGADO');
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Pago registrado y mesa liberada',
+      timer: 1400,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    Swal.fire('Error', 'No se pudo registrar el pago', 'error');
+  }
+};
+
 
   const handleLogout = () => {
     logout();
@@ -503,11 +571,19 @@ const fetchData = useCallback(async () => {
           </div>
 
           <button
-            onClick={enviarComanda}
-            className="w-full bg-blue-500 text-white py-3 rounded-lg font-bold"
-          >
-            Enviar Pedido - ${calcularTotal()}
-          </button>
+  disabled={enviando}
+  onClick={async () => {
+    setEnviando(true);
+    await enviarComanda();
+    setEnviando(false);
+  }}
+  className={`w-full bg-blue-500 text-white py-3 rounded-lg font-bold ${
+    enviando ? 'opacity-50 cursor-not-allowed' : ''
+  }`}
+>
+  Enviar Pedido - ${calcularTotal()}
+</button>
+
         </div>
       )}
     </div>

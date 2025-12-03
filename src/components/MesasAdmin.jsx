@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { getMesas, createMesa, updateMesa, deleteMesa, toggleDisponibilidadMesa } from '../services/api';
 
 function MesasAdmin() {
@@ -20,7 +21,7 @@ function MesasAdmin() {
       const mesasOrdenadas = response.data.sort((a, b) => a.id - b.id);
       setMesas(mesasOrdenadas);
     } catch (error) {
-      console.error('Error al cargar mesas:', error);
+      Swal.fire('Error', 'No se pudieron cargar las mesas', 'error');
     }
   };
 
@@ -30,17 +31,26 @@ function MesasAdmin() {
     try {
       if (editando) {
         await updateMesa(editando.id, formData);
-        alert('Mesa actualizada');
+        Swal.fire({
+          icon: 'success',
+          title: 'Mesa actualizada correctamente',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await createMesa(formData);
-        alert('Mesa creada');
+        Swal.fire({
+          icon: 'success',
+          title: 'Mesa creada correctamente',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
-      
+
       resetForm();
       fetchMesas();
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error al guardar mesa');
+      Swal.fire('Error', 'Hubo un problema al guardar la mesa', 'error');
     }
   };
 
@@ -58,23 +68,41 @@ function MesasAdmin() {
       await toggleDisponibilidadMesa(id);
       fetchMesas();
     } catch (error) {
-      console.error('Error:', error);
-      const errorMsg = error.response?.data?.error || 'Error al cambiar disponibilidad';
-      alert(errorMsg);
+      Swal.fire(
+        'Error',
+        error.response?.data?.error || 'No se pudo cambiar la disponibilidad',
+        'error'
+      );
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar esta mesa?')) return;
+    const result = await Swal.fire({
+      title: '¿Eliminar mesa?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteMesa(id);
-      alert('Mesa eliminada correctamente');
+      Swal.fire({
+        icon: 'success',
+        title: 'Mesa eliminada',
+        timer: 1500,
+        showConfirmButton: false
+      });
       fetchMesas();
     } catch (error) {
-      console.error('Error:', error);
-      const errorMsg = error.response?.data?.error || 'Error al eliminar mesa';
-      alert(errorMsg);
+      Swal.fire(
+        'Error',
+        error.response?.data?.error || 'No se pudo eliminar la mesa',
+        'error'
+      );
     }
   };
 
