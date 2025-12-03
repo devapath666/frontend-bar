@@ -52,7 +52,6 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg"
-              placeholder="admin@bar.com"
               required
             />
           </div>
