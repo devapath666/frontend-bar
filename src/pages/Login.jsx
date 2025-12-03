@@ -65,12 +65,6 @@ function Login() {
             {loading ? 'Cargando...' : 'Ingresar'}
           </button>
         </form>
-        
-        <div className="mt-4 text-sm text-gray-600">
-          <p>Usuarios de prueba:</p>
-          <p>• admin@bar.com (Admin)</p>
-          <p>• juan@bar.com (Mozo)</p>
-        </div>
       </div>
     </div>
   );
