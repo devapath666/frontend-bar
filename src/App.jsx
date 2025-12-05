@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import MozoApp from './pages/MozoApp';
+import CocinaView from './pages/CocinaView';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -25,6 +26,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="MOZO">
               <MozoApp />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/cocina" 
+          element={
+            <ProtectedRoute requiredRole="COCINA">
+              <CocinaView />
             </ProtectedRoute>
           } 
         />

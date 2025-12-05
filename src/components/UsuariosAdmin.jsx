@@ -281,18 +281,6 @@ function UsuariosAdmin() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">
-                Contraseña {editando && '(dejar vacío para no cambiar)'}
-              </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required={!editando}
-              />
-            </div>
 
             <div>
               <label className="block text-sm text-gray-300 mb-2">Rol</label>
