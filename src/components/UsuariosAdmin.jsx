@@ -6,6 +6,7 @@ function UsuariosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [rolFiltro, setRolFiltro] = useState('TODOS');
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -20,9 +21,18 @@ function UsuariosAdmin() {
   const fetchUsuarios = async () => {
     try {
       const response = await getUsuarios();
-      setUsuarios(response.data);
+      const usuariosOrdenados = response.data.sort((a, b) => 
+        a.nombre.localeCompare(b.nombre)
+      );
+      setUsuarios(usuariosOrdenados);
     } catch (error) {
-      console.error('Error al cargar usuarios:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar los usuarios',
+        background: '#1f2937',
+        color: '#f3f4f6'
+      });
     }
   };
 
@@ -39,33 +49,37 @@ function UsuariosAdmin() {
         
         Swal.fire({
           title: '¡Actualizado!',
-          text: 'Usuario actualizado correctamente',
+          text: 'Usuario actualizado',
           icon: 'success',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: '#1f2937',
+          color: '#f3f4f6'
         });
       } else {
         await createUsuario(formData);
         
         Swal.fire({
           title: '¡Creado!',
-          text: 'Usuario creado correctamente',
+          text: 'Usuario creado',
           icon: 'success',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: '#1f2937',
+          color: '#f3f4f6'
         });
       }
       
       resetForm();
       fetchUsuarios();
     } catch (error) {
-      console.error('Error:', error);
-      
       Swal.fire({
         title: 'Error',
         text: 'No se pudo guardar el usuario',
         icon: 'error',
-        confirmButtonColor: '#3b82f6'
+        confirmButtonColor: '#3b82f6',
+        background: '#1f2937',
+        color: '#f3f4f6'
       });
     }
   };
@@ -90,7 +104,9 @@ function UsuariosAdmin() {
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      background: '#1f2937',
+      color: '#f3f4f6'
     });
 
     if (!result.isConfirmed) return;
@@ -100,21 +116,23 @@ function UsuariosAdmin() {
       
       Swal.fire({
         title: '¡Eliminado!',
-        text: 'Usuario eliminado correctamente',
+        text: 'Usuario eliminado',
         icon: 'success',
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
+        background: '#1f2937',
+        color: '#f3f4f6'
       });
       
       fetchUsuarios();
     } catch (error) {
-      console.error('Error:', error);
-      
       Swal.fire({
         title: 'Error',
-        text: 'No se pudo eliminar el usuario',
+        text: 'No se pudo eliminar',
         icon: 'error',
-        confirmButtonColor: '#3b82f6'
+        confirmButtonColor: '#3b82f6',
+        background: '#1f2937',
+        color: '#f3f4f6'
       });
     }
   };
@@ -130,81 +148,177 @@ function UsuariosAdmin() {
     setShowForm(false);
   };
 
-  const getRolColor = (rol) => {
+  const getRolConfig = (rol) => {
     switch (rol) {
-      case 'ADMIN': return 'text-red-600 bg-red-100';
-      case 'MOZO': return 'text-blue-600 bg-blue-100';
-      case 'COCINA': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'ADMIN': 
+        return {
+          color: 'text-red-400 bg-red-900 border-red-500',
+          icon: '👑',
+          nombre: 'Admin'
+        };
+      case 'MOZO': 
+        return {
+          color: 'text-blue-400 bg-blue-900 border-blue-500',
+          icon: '🍽️',
+          nombre: 'Mozo'
+        };
+      case 'COCINA': 
+        return {
+          color: 'text-green-400 bg-green-900 border-green-500',
+          icon: '👨‍🍳',
+          nombre: 'Cocina'
+        };
+      default: 
+        return {
+          color: 'text-gray-400 bg-gray-700 border-gray-500',
+          icon: '👤',
+          nombre: rol
+        };
     }
   };
 
+  const usuariosPorRol = {
+    ADMIN: usuarios.filter(u => u.rol === 'ADMIN'),
+    MOZO: usuarios.filter(u => u.rol === 'MOZO'),
+    COCINA: usuarios.filter(u => u.rol === 'COCINA')
+  };
+
+  const usuariosFiltrados = rolFiltro === 'TODOS' 
+    ? usuarios 
+    : usuariosPorRol[rolFiltro];
+
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {showForm ? 'Cancelar' : '+ Nuevo Usuario'}
-        </button>
+    <div className="min-h-screen bg-gray-800 p-4">
+      
+      {/* HEADER */}
+      <div className="bg-gray-700 rounded-lg p-4 mb-6 shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Gestión de Usuarios</h2>
+            <p className="text-gray-400 text-sm">
+              {usuarios.length} usuarios registrados
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+          >
+            {showForm ? 'Cancelar' : '+ Nuevo Usuario'}
+          </button>
+        </div>
+
+        {/* FILTROS */}
+        <div className="flex gap-2 overflow-x-auto">
+          <button
+            onClick={() => setRolFiltro('TODOS')}
+            className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
+              rolFiltro === 'TODOS'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Todos ({usuarios.length})
+          </button>
+          <button
+            onClick={() => setRolFiltro('ADMIN')}
+            className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
+              rolFiltro === 'ADMIN'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            👑 Admins ({usuariosPorRol.ADMIN.length})
+          </button>
+          <button
+            onClick={() => setRolFiltro('MOZO')}
+            className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
+              rolFiltro === 'MOZO'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            🍽️ Mozos ({usuariosPorRol.MOZO.length})
+          </button>
+          <button
+            onClick={() => setRolFiltro('COCINA')}
+            className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
+              rolFiltro === 'COCINA'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            👨‍🍳 Cocina ({usuariosPorRol.COCINA.length})
+          </button>
+        </div>
       </div>
 
-      {/* Formulario */}
+      {/* FORMULARIO */}
       {showForm && (
-        <div className="bg-white p-4 rounded-lg border mb-4">
-          <h3 className="font-bold mb-3">
+        <div className="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-6 shadow-lg">
+          <h3 className="font-bold text-xl text-white mb-4">
             {editando ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h3>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm mb-1">Nombre</label>
+              <label className="block text-sm text-gray-300 mb-2">Nombre</label>
               <input
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Email</label>
+              <label className="block text-sm text-gray-300 mb-2">Email</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Rol</label>
+              <label className="block text-sm text-gray-300 mb-2">
+                Contraseña {editando && '(dejar vacío para no cambiar)'}
+              </label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required={!editando}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Rol</label>
               <select
                 value={formData.rol}
                 onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
-                <option value="MOZO">Mozo</option>
-                <option value="ADMIN">Admin</option>
-                <option value="COCINA">Cocina</option>
+                <option value="MOZO">🍽️ Mozo</option>
+                <option value="ADMIN">👑 Admin</option>
+                <option value="COCINA">👨‍🍳 Cocina</option>
               </select>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded flex-1"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex-1 font-semibold transition"
               >
                 {editando ? 'Actualizar' : 'Crear'}
               </button>
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-300 px-4 py-2 rounded"
+                className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition"
               >
                 Cancelar
               </button>
@@ -213,41 +327,60 @@ function UsuariosAdmin() {
         </div>
       )}
 
-      {/* Lista de usuarios */}
-      <div className="space-y-2">
-        {usuarios.map((usuario) => (
-          <div
-            key={usuario.id}
-            className="bg-white p-4 rounded-lg border flex justify-between items-center"
-          >
-            <div className="flex-1">
-              <p className="font-semibold">{usuario.nombre}</p>
-              <p className="text-sm text-gray-600">{usuario.email}</p>
-              <span className={`inline-block mt-1 px-2 py-1 text-xs rounded ${getRolColor(usuario.rol)}`}>
-                {usuario.rol}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(usuario)}
-                className="text-blue-500 text-sm border border-blue-500 px-3 py-1 rounded"
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => handleDelete(usuario.id)}
-                className="text-red-500 text-sm border border-red-500 px-3 py-1 rounded"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* USUARIOS */}
+      {usuariosFiltrados.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          No hay usuarios registrados
+        </div>
+      ) : (
+        <div className="bg-gray-700 rounded-lg p-4 shadow-lg">
+          <h3 className="text-lg font-bold text-white mb-4 border-b border-gray-600 pb-2">
+            {rolFiltro === 'TODOS' ? 'Todos los Usuarios' : `Usuarios - ${getRolConfig(rolFiltro).nombre}`}
+            <span className="text-sm font-normal text-gray-400 ml-2">
+              ({usuariosFiltrados.length})
+            </span>
+          </h3>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {usuariosFiltrados.map((usuario) => {
+              const rolConfig = getRolConfig(usuario.rol);
+              return (
+                <div
+                  key={usuario.id}
+                  className="bg-gray-600 rounded-lg border border-gray-500 hover:border-blue-500 transition shadow-md hover:shadow-xl overflow-hidden"
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <p className="font-bold text-white text-lg mb-1">{usuario.nombre}</p>
+                        <p className="text-sm text-gray-400 mb-2">{usuario.email}</p>
+                      </div>
+                      <span className="text-2xl">{rolConfig.icon}</span>
+                    </div>
+                    
+                    <span className={`inline-block px-3 py-1 text-xs rounded font-semibold border ${rolConfig.color} mb-3`}>
+                      {rolConfig.nombre}
+                    </span>
 
-      {usuarios.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          No hay usuarios creados
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => handleEdit(usuario)}
+                        className="flex-1 text-blue-400 text-sm border border-blue-400 px-3 py-1.5 rounded hover:bg-blue-400 hover:text-white transition font-medium"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(usuario.id)}
+                        className="flex-1 text-red-400 text-sm border border-red-400 px-3 py-1.5 rounded hover:bg-red-400 hover:text-white transition font-medium"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

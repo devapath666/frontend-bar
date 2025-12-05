@@ -62,24 +62,28 @@ function ComandasAdmin() {
   /** 🎨 ESTILOS UI */
   const estadoConfig = {
     PENDIENTE: {
-      color: 'bg-yellow-50 border-yellow-400',
+      color: 'bg-yellow-100 border-yellow-500',
       titulo: 'Pendientes',
-      headerBg: 'bg-yellow-500'
+      headerBg: 'bg-yellow-500',
+      columnBg: 'bg-gray-700'
     },
     EN_PREPARACION: {
-      color: 'bg-blue-50 border-blue-400',
+      color: 'bg-blue-100 border-blue-500',
       titulo: 'En Preparación',
-      headerBg: 'bg-blue-500'
+      headerBg: 'bg-blue-500',
+      columnBg: 'bg-gray-700'
     },
     LISTO: {
-      color: 'bg-green-50 border-green-400',
+      color: 'bg-green-100 border-green-500',
       titulo: 'Listos',
-      headerBg: 'bg-green-500'
+      headerBg: 'bg-green-500',
+      columnBg: 'bg-gray-700'
     },
     ENTREGADO: {
-      color: 'bg-purple-50 border-purple-400',
+      color: 'bg-purple-100 border-purple-500',
       titulo: 'Entregados',
-      headerBg: 'bg-purple-500'
+      headerBg: 'bg-purple-500',
+      columnBg: 'bg-gray-700'
     }
   };
 
@@ -112,7 +116,7 @@ function ComandasAdmin() {
   /** 🌀 LOADING */
   if (loading) {
     return (
-      <div className="h-40 flex items-center justify-center text-gray-500">
+      <div className="h-40 flex items-center justify-center text-gray-300">
         Cargando comandas...
       </div>
     );
@@ -120,13 +124,13 @@ function ComandasAdmin() {
 
   /** 🖥️ RENDER */
   return (
-    <div className="p-4 h-screen overflow-hidden">
+    <div className="p-4 h-screen overflow-hidden bg-gray-800">
       {/* COLUMNAS DE ESTADOS */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
         {Object.entries(estadoConfig).map(([estado, config]) => (
           <div key={estado} className="flex flex-col h-full">
             {/* HEADER COLUMNA */}
-            <div className={`${config.headerBg} text-white p-4 rounded-t-lg`}>
+            <div className={`${config.headerBg} text-white p-4 rounded-t-lg shadow-lg`}>
               <h2 className="text-xl font-bold">{config.titulo}</h2>
               <p className="text-sm opacity-90">
                 {comandasAgrupadas[estado].length} comanda{comandasAgrupadas[estado].length !== 1 ? 's' : ''}
@@ -134,7 +138,7 @@ function ComandasAdmin() {
             </div>
 
             {/* LISTA COMANDAS */}
-            <div className="flex-1 bg-gray-100 p-3 rounded-b-lg overflow-y-auto space-y-3">
+            <div className={`flex-1 ${config.columnBg} p-3 rounded-b-lg overflow-y-auto space-y-3`}>
               {comandasAgrupadas[estado].length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   Sin comandas
@@ -143,21 +147,21 @@ function ComandasAdmin() {
                 comandasAgrupadas[estado].map((comanda) => (
                   <div
                     key={comanda.id}
-                    className={`border rounded-lg p-4 shadow-sm ${config.color} bg-white`}
+                    className={`border-2 rounded-lg p-4 shadow-lg ${config.color} bg-white`}
                   >
                     {/* HEADER CARD */}
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-bold text-2xl">
+                        <p className="font-bold text-3xl text-gray-800">
                           Mesa {comanda.mesa.numero}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-600">
                           #{comanda.id.slice(0, 6)}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-semibold text-gray-700">
                           {new Date(comanda.createdAt).toLocaleTimeString('es-AR', {
                             hour: '2-digit',
                             minute: '2-digit'
@@ -167,13 +171,13 @@ function ComandasAdmin() {
                     </div>
 
                     {/* ITEMS */}
-                    <div className="space-y-2 border-t pt-3 mb-3 text-sm">
+                    <div className="space-y-2 border-t-2 border-gray-300 pt-3 mb-3 text-sm">
                       {comanda.items.map((item) => (
                         <div key={item.id} className="flex justify-between">
-                          <span className="font-medium">{item.cantidad}x {item.producto.nombre}</span>
+                          <span className="font-bold text-gray-800">{item.cantidad}x {item.producto.nombre}</span>
                           {item.observaciones && (
-                            <span className="text-xs italic text-gray-600">
-                              ({item.observaciones})
+                            <span className="text-xs italic text-gray-600 bg-gray-200 px-2 py-1 rounded">
+                              {item.observaciones}
                             </span>
                           )}
                         </div>
@@ -181,7 +185,7 @@ function ComandasAdmin() {
                     </div>
 
                     {/* TOTAL */}
-                    <div className="flex justify-between border-t pt-3 mb-3 font-semibold">
+                    <div className="flex justify-between border-t-2 border-gray-300 pt-3 mb-3 font-bold text-lg text-gray-800">
                       <span>Total:</span>
                       <span>${comanda.total}</span>
                     </div>
@@ -192,7 +196,7 @@ function ComandasAdmin() {
                         onClick={() =>
                           handleCambiarEstado(comanda.id, getSiguienteEstado(comanda.estado))
                         }
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-base transition shadow-md"
                       >
                         {getBotonTexto(comanda.estado)}
                       </button>

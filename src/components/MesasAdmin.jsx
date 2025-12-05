@@ -18,10 +18,20 @@ function MesasAdmin() {
   const fetchMesas = async () => {
     try {
       const response = await getMesas();
-      const mesasOrdenadas = response.data.sort((a, b) => a.id - b.id);
+      const mesasOrdenadas = response.data.sort((a, b) => {
+        const numA = parseInt(a.numero.replace(/\D/g, ''));
+        const numB = parseInt(b.numero.replace(/\D/g, ''));
+        return numA - numB;
+      });
       setMesas(mesasOrdenadas);
     } catch (error) {
-      Swal.fire('Error', 'No se pudieron cargar las mesas', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar las mesas',
+        background: '#1f2937',
+        color: '#f3f4f6'
+      });
     }
   };
 
@@ -33,24 +43,34 @@ function MesasAdmin() {
         await updateMesa(editando.id, formData);
         Swal.fire({
           icon: 'success',
-          title: 'Mesa actualizada correctamente',
+          title: 'Mesa actualizada',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: '#1f2937',
+          color: '#f3f4f6'
         });
       } else {
         await createMesa(formData);
         Swal.fire({
           icon: 'success',
-          title: 'Mesa creada correctamente',
+          title: 'Mesa creada',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: '#1f2937',
+          color: '#f3f4f6'
         });
       }
 
       resetForm();
       fetchMesas();
     } catch (error) {
-      Swal.fire('Error', 'Hubo un problema al guardar la mesa', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al guardar',
+        background: '#1f2937',
+        color: '#f3f4f6'
+      });
     }
   };
 
@@ -68,11 +88,13 @@ function MesasAdmin() {
       await toggleDisponibilidadMesa(id);
       fetchMesas();
     } catch (error) {
-      Swal.fire(
-        'Error',
-        error.response?.data?.error || 'No se pudo cambiar la disponibilidad',
-        'error'
-      );
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.response?.data?.error || 'No se pudo cambiar la disponibilidad',
+        background: '#1f2937',
+        color: '#f3f4f6'
+      });
     }
   };
 
@@ -83,7 +105,11 @@ function MesasAdmin() {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      background: '#1f2937',
+      color: '#f3f4f6'
     });
 
     if (!result.isConfirmed) return;
@@ -94,15 +120,19 @@ function MesasAdmin() {
         icon: 'success',
         title: 'Mesa eliminada',
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
+        background: '#1f2937',
+        color: '#f3f4f6'
       });
       fetchMesas();
     } catch (error) {
-      Swal.fire(
-        'Error',
-        error.response?.data?.error || 'No se pudo eliminar la mesa',
-        'error'
-      );
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.response?.data?.error || 'No se pudo eliminar',
+        background: '#1f2937',
+        color: '#f3f4f6'
+      });
     }
   };
 
@@ -119,86 +149,98 @@ function MesasAdmin() {
     switch (estado) {
       case 'DISPONIBLE':
         return {
-          color: 'text-green-600 bg-green-100',
-          texto: 'ACTIVA',
+          color: 'text-green-400 bg-green-900 border-green-500',
+          texto: 'DISPONIBLE',
           disponible: true
         };
       case 'OCUPADA':
         return {
-          color: 'text-red-600 bg-red-100',
+          color: 'text-red-400 bg-red-900 border-red-500',
           texto: 'OCUPADA',
           disponible: true
         };
       case 'ESPERANDO_PAGO':
         return {
-          color: 'text-gray-600 bg-gray-100',
+          color: 'text-gray-400 bg-gray-700 border-gray-500',
           texto: 'INACTIVA',
           disponible: false
         };
       default:
         return {
-          color: 'text-gray-600 bg-gray-100',
+          color: 'text-gray-400 bg-gray-700 border-gray-500',
           texto: estado,
           disponible: true
         };
     }
   };
 
+  const mesasActivas = mesas.filter(m => m.estado !== 'ESPERANDO_PAGO');
+  const mesasInactivas = mesas.filter(m => m.estado === 'ESPERANDO_PAGO');
+
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Gestión de Mesas</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {showForm ? 'Cancelar' : '+ Nueva Mesa'}
-        </button>
+    <div className="min-h-screen bg-gray-800 p-4">
+      
+      {/* HEADER */}
+      <div className="bg-gray-700 rounded-lg p-4 mb-6 shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Gestión de Mesas</h2>
+            <p className="text-gray-400 text-sm">
+              {mesasActivas.length} activas • {mesasInactivas.length} inactivas
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
+          >
+            {showForm ? 'Cancelar' : '+ Nueva Mesa'}
+          </button>
+        </div>
       </div>
 
-      {/* Formulario */}
+      {/* FORMULARIO */}
       {showForm && (
-        <div className="bg-white p-4 rounded-lg border mb-4">
-          <h3 className="font-bold mb-3">
+        <div className="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-6 shadow-lg">
+          <h3 className="font-bold text-xl text-white mb-4">
             {editando ? 'Editar Mesa' : 'Nueva Mesa'}
           </h3>
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm mb-1">Número de Mesa</label>
+              <label className="block text-sm text-gray-300 mb-2">Número de Mesa</label>
               <input
                 type="text"
                 value={formData.numero}
                 onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Mesa 1"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Capacidad (personas)</label>
+              <label className="block text-sm text-gray-300 mb-2">Capacidad (personas)</label>
               <input
                 type="number"
                 value={formData.capacidad}
                 onChange={(e) => setFormData({ ...formData, capacidad: parseInt(e.target.value) })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-gray-600 border border-gray-500 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min="1"
                 max="20"
                 required
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded flex-1"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex-1 font-semibold transition"
               >
                 {editando ? 'Actualizar' : 'Crear'}
               </button>
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-300 px-4 py-2 rounded"
+                className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold transition"
               >
                 Cancelar
               </button>
@@ -207,68 +249,129 @@ function MesasAdmin() {
         </div>
       )}
 
-      {/* Lista de mesas */}
-      <div className="grid grid-cols-2 gap-3">
-        {mesas.map((mesa) => {
-          const estadoInfo = getEstadoInfo(mesa.estado);
-          return (
-            <div
-              key={mesa.id}
-              className="bg-white p-4 rounded-lg border"
-            >
-              <div className="mb-3">
-                <p className="font-bold text-lg">{mesa.numero}</p>
-                <p className="text-sm text-gray-600">
-                  Capacidad: {mesa.capacidad} personas
-                </p>
-                <span className={`inline-block mt-2 px-2 py-1 text-xs rounded ${estadoInfo.color}`}>
-                  {estadoInfo.texto}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {/* Toggle disponibilidad */}
-                <button
-                  onClick={() => handleToggleDisponibilidad(mesa.id)}
-                  disabled={mesa.estado === 'OCUPADA'}
-                  className={`w-full text-sm px-3 py-2 rounded font-semibold ${
-                    mesa.estado === 'OCUPADA'
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : estadoInfo.disponible
-                      ? 'bg-yellow-100 text-yellow-700 border border-yellow-400'
-                      : 'bg-green-100 text-green-700 border border-green-400'
-                  }`}
+      {/* MESAS ACTIVAS */}
+      {mesasActivas.length > 0 && (
+        <div className="bg-gray-700 rounded-lg p-4 mb-6 shadow-lg">
+          <h3 className="text-lg font-bold text-white mb-4 border-b border-gray-600 pb-2">
+            Mesas Activas ({mesasActivas.length})
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {mesasActivas.map((mesa) => {
+              const estadoInfo = getEstadoInfo(mesa.estado);
+              return (
+                <div
+                  key={mesa.id}
+                  className="bg-gray-600 rounded-lg border border-gray-500 hover:border-blue-500 transition shadow-md hover:shadow-xl overflow-hidden"
                 >
-                  {mesa.estado === 'OCUPADA'
-                    ? 'Mesa en uso'
-                    : estadoInfo.disponible
-                    ? 'Desactivar'
-                    : 'Activar'}
-                </button>
+                  <div className="p-4">
+                    <p className="font-bold text-white text-xl mb-1">{mesa.numero}</p>
+                    <p className="text-sm text-gray-400 mb-2">
+                      👥 {mesa.capacidad} personas
+                    </p>
+                    <span className={`inline-block px-2 py-1 text-xs rounded font-semibold border ${estadoInfo.color} mb-3`}>
+                      {estadoInfo.texto}
+                    </span>
 
-                {/* Editar y Eliminar */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(mesa)}
-                    className="text-blue-500 text-sm border border-blue-500 px-3 py-1 rounded flex-1"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(mesa.id)}
-                    className="text-red-500 text-sm border border-red-500 px-3 py-1 rounded flex-1"
-                  >
-                    Eliminar
-                  </button>
+                    <div className="space-y-2">
+                      {/* Toggle disponibilidad */}
+                      <button
+                        onClick={() => handleToggleDisponibilidad(mesa.id)}
+                        disabled={mesa.estado === 'OCUPADA'}
+                        className={`w-full text-xs px-3 py-2 rounded-lg font-semibold transition ${
+                          mesa.estado === 'OCUPADA'
+                            ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                            : estadoInfo.disponible
+                            ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                      >
+                        {mesa.estado === 'OCUPADA'
+                          ? 'En uso'
+                          : estadoInfo.disponible
+                          ? 'Desactivar'
+                          : 'Activar'}
+                      </button>
+
+                      {/* Editar y Eliminar */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(mesa)}
+                          className="flex-1 text-blue-400 text-xs border border-blue-400 px-2 py-1.5 rounded hover:bg-blue-400 hover:text-white transition font-medium"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(mesa.id)}
+                          className="flex-1 text-red-400 text-xs border border-red-400 px-2 py-1.5 rounded hover:bg-red-400 hover:text-white transition font-medium"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MESAS INACTIVAS */}
+      {mesasInactivas.length > 0 && (
+        <details className="bg-gray-700 rounded-lg p-4 shadow-lg">
+          <summary className="cursor-pointer text-gray-300 font-semibold hover:text-white transition">
+            🔒 Mesas Inactivas ({mesasInactivas.length})
+          </summary>
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {mesasInactivas.map((mesa) => {
+              const estadoInfo = getEstadoInfo(mesa.estado);
+              return (
+                <div
+                  key={mesa.id}
+                  className="bg-gray-600 rounded-lg border border-gray-500 opacity-60 hover:opacity-80 transition shadow-md overflow-hidden"
+                >
+                  <div className="p-4">
+                    <p className="font-bold text-white text-xl mb-1">{mesa.numero}</p>
+                    <p className="text-sm text-gray-400 mb-2">
+                      👥 {mesa.capacidad} personas
+                    </p>
+                    <span className={`inline-block px-2 py-1 text-xs rounded font-semibold border ${estadoInfo.color} mb-3`}>
+                      {estadoInfo.texto}
+                    </span>
+
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleToggleDisponibilidad(mesa.id)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded-lg font-semibold transition"
+                      >
+                        Activar
+                      </button>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(mesa)}
+                          className="flex-1 text-blue-400 text-xs border border-blue-400 px-2 py-1.5 rounded hover:bg-blue-400 hover:text-white transition font-medium"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(mesa.id)}
+                          className="flex-1 text-red-400 text-xs border border-red-400 px-2 py-1.5 rounded hover:bg-red-400 hover:text-white transition font-medium"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      )}
 
       {mesas.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-400">
           No hay mesas creadas
         </div>
       )}
